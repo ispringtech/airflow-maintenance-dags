@@ -68,25 +68,27 @@ if ENABLE_DELETE_CHILD_LOG.lower() == "true":
             "Airflow Configurations: " + str(e)
         )
 
-default_args = {
-    'owner': DAG_OWNER_NAME,
+DAG_DEFAULT_ARGS = {
     'depends_on_past': False,
-    'email': ALERT_EMAIL_ADDRESSES,
-    'email_on_failure': True,
+    'owner': DAG_OWNER_NAME,
+    'sla': timedelta(minutes=10),
+    'retries': 0,
+    'email_on_failure': False,
     'email_on_retry': False,
-    'start_date': START_DATE,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=1)
 }
+
 
 dag = DAG(
     DAG_ID,
-    default_args=default_args,
+    catchup=False,
+    max_active_runs=1,
+    default_args=DAG_DEFAULT_ARGS,
     schedule_interval=SCHEDULE_INTERVAL,
     start_date=START_DATE,
-    tags=['teamclairvoyant', 'airflow-maintenance-dags'],
+    tags=['maintenance'],
     template_undefined=jinja2.Undefined
 )
+
 if hasattr(dag, 'doc_md'):
     dag.doc_md = __doc__
 if hasattr(dag, 'catchup'):
@@ -104,7 +106,7 @@ WORKER_SLEEP_TIME="{{params.sleep_time}}"
 
 sleep ${WORKER_SLEEP_TIME}s
 
-MAX_LOG_AGE_IN_DAYS=""" + str(DEFAULT_MAX_LOG_AGE_IN_DAYS) + """
+MAX_LOG_AGE_IN_DAYS='""" + str(DEFAULT_MAX_LOG_AGE_IN_DAYS) + """'
 ENABLE_DELETE=""" + str("true" if ENABLE_DELETE else "false") + """
 echo "Finished Getting Configurations"
 echo ""

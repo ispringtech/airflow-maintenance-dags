@@ -68,28 +68,27 @@ DATABASE_OBJECTS = ['BaseJob', 'DagRun', 'TaskInstance', 'Log', 'XCom', 'SlaMiss
 
 session = settings.Session()
 
-default_args = {
-    'owner': DAG_OWNER_NAME,
+DAG_DEFAULT_ARGS = {
     'depends_on_past': False,
-    'email': ALERT_EMAIL_ADDRESSES,
-    'email_on_failure': True,
+    'owner': DAG_OWNER_NAME,
+    'sla': timedelta(minutes=10),
+    'retries': 0,
+    'email_on_failure': False,
     'email_on_retry': False,
-    'start_date': START_DATE,
-    'retries': 1,
-    'retry_delay': timedelta(minutes=1)
 }
 
 dag = DAG(
     DAG_ID,
-    default_args=default_args,
+    catchup=False,
+    max_active_runs=1,
+    default_args=DAG_DEFAULT_ARGS,
     schedule_interval=SCHEDULE_INTERVAL,
     start_date=START_DATE,
-    tags=['airflow-maintenance-dags']
+    tags=['maintenance']
 )
+
 if hasattr(dag, 'doc_md'):
     dag.doc_md = __doc__
-if hasattr(dag, 'catchup'):
-    dag.catchup = False
 
 
 def print_configuration_function(**context):
